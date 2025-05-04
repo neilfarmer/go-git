@@ -19,11 +19,11 @@ Download the binary from the [Releases page](https://github.com/youruser/go-git/
 
 ````bash
 # For Linux AMD64
-curl -L https://github.com/youruser/go-git/releases/latest/download/go-git-linux-amd64 -o /usr/local/bin/go-git
+curl -L https://github.com/neilfarmer/go-git/releases/latest/download/go-git-linux-amd64 -o /usr/local/bin/go-git
 chmod +x /usr/local/bin/go-git
 
 # For macOS ARM64 (Apple Silicon)
-curl -L https://github.com/youruser/go-git/releases/latest/download/go-git-darwin-arm64 -o /usr/local/bin/go-git
+curl -L https://github.com/neilfarmer/go-git/releases/latest/download/go-git-darwin-arm64 -o /usr/local/bin/go-git
 chmod +x /usr/local/bin/go-git
 ```
 
@@ -49,8 +49,8 @@ chmod +x /usr/local/bin/go-git
 
 ```json
 {
+  "scm_name": "github",
   "token": "ghp_xxx...xxx",
-  "scm_name": "github"
 }
 ````
 
@@ -58,8 +58,9 @@ or for GitLab:
 
 ```json
 {
+  "scm_name": "gitlab",
   "token": "glpat_xxx...xxx",
-  "scm_name": "gitlab"
+  "url": "https://gitlab.derp.fancy.com"
 }
 ```
 
@@ -68,17 +69,17 @@ or for GitLab:
 Run from the command line:
 
 ```bash
-go run main.go graph
+go-git graph
 ```
 
 ### Example Commands
 
 ```bash
 # Clone all accessible GitHub repositories with debug logging
-go run main.go graph --verbose debug
+go-git graph
 
 # Synchronize repositories (fetch and prune)
-go run main.go sync --verbose info
+go-git sync
 
 # Build the binary and run it
 go build -o go-git

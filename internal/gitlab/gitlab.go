@@ -102,7 +102,12 @@ func GetGroups(client *gitlab.Client) ([]gitlab.Group, error) {
 }
 
 func SetupClient(config config.Config) (*gitlab.Client, error) {
-	client, err := gitlab.NewClient(config.Token)
+	if config.Url == "" {
+		slog.Debug("GitLab URL not set, using default")
+		config.Url = "https://gitlab.com"
+	}
+	client, err := gitlab.NewClient(config.Token, gitlab.WithBaseURL(config.Url+"/api/v4"))
+	slog.Debug("GitLab Url", "url", config.Url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GitLab client: %w", err)
 	}
