@@ -25,6 +25,9 @@ func GetRepos(config config.Config) {
 		fmt.Println("Error listing repositories:", err)
 		return
 	}
+	os.Mkdir("github", 0755)
+	os.Chdir("github")
+
 	for _, repo := range repos {
 		fmt.Printf("Cloning Repository: %s\n", *repo.Name)
 		fmt.Printf("Clone URL: %s\n", *repo.CloneURL)
