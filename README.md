@@ -13,6 +13,20 @@ Before using this tool, ensure the following are installed and configured:
 | Token       | GitHub or GitLab token with access to repositories           |
 | Config File | A JSON config file located at `~/.config/go-git/config.json` |
 
+## 🧩 Installation
+
+Download the binary from the [Releases page](https://github.com/youruser/go-git/releases), or install via `curl`:
+
+````bash
+# For Linux AMD64
+curl -L https://github.com/youruser/go-git/releases/latest/download/go-git-linux-amd64 -o /usr/local/bin/go-git
+chmod +x /usr/local/bin/go-git
+
+# For macOS ARM64 (Apple Silicon)
+curl -L https://github.com/youruser/go-git/releases/latest/download/go-git-darwin-arm64 -o /usr/local/bin/go-git
+chmod +x /usr/local/bin/go-git
+```
+
 ### GitHub Token Setup
 
 1. Visit https://github.com/settings/tokens?type=beta
@@ -38,7 +52,7 @@ Before using this tool, ensure the following are installed and configured:
   "token": "ghp_xxx...xxx",
   "scm_name": "github"
 }
-```
+````
 
 or for GitLab:
 
@@ -97,3 +111,14 @@ go build -o go-git
 ## 🔒 Security Warning
 
 This tool uses the token directly in the clone URL. Do not expose logs or URLs containing the token. Future versions may include credential helper integration.
+
+## Release
+
+Releases are handled via tags
+
+```bash
+export APP_TAG="v1.x.x"
+
+git tag ${APP_TAG}
+git push origin ${APP_TAG}
+```
