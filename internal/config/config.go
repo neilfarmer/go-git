@@ -17,6 +17,7 @@ type Config struct {
 	SCM_Name string `json:"scm_name"`
 	Token    string `json:"token"`
 	Url      string `json:"url"`
+	Groups   []string `json:"groups"`
 }
 
 func ReadConfig() (config Config, err error) {

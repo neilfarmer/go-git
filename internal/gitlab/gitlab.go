@@ -33,6 +33,10 @@ func GetRepos(config config.Config) {
 	sem := make(chan struct{}, 10) // limit concurrent clones
 
 	for _, group := range groups {
+
+		if len(config.Groups) > 0 && !contains(config.Groups, group.FullPath) {
+			continue
+		}
 		groupName := group.FullPath
 		slog.Debug("Group Path", "groupName", groupName)
 		if err := os.MkdirAll(groupName, 0755); err != nil {
@@ -128,6 +132,18 @@ func GraphRepos(config config.Config) {
 	// Map by full path for parent tracking
 	groupMap := make(map[string]*gitlab.Group)
 	for _, group := range groups {
+		if len(config.Groups) > 0 {
+			include := false
+			for _, selected := range config.Groups {
+				if group.FullPath == selected || strings.HasPrefix(group.FullPath, selected+"/") {
+					include = true
+					break
+				}
+			}
+			if !include {
+				continue
+			}
+		}
 		groupMap[group.FullPath] = &group
 	}
 
@@ -188,4 +204,13 @@ func printProjects(client *gitlab.Client, groupID int, prefix string) {
 		}
 		fmt.Printf("%s%s%s\n", prefix, branch, project.Name)
 	}
+}
+
+func contains(list []string, val string) bool {
+	for _, item := range list {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }
