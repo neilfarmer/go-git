@@ -34,7 +34,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           mkdir -p dist
-          go build -o dist/go-git-${GOOS}-${GOARCH}
+          go build -ldflags "-s -w -X github.com/neilfarmer/go-git/internal.Version=${{ github.ref_name }}" -o dist/go-git-${GOOS}-${GOARCH}
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v1
