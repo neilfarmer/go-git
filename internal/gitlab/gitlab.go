@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/neilfarmer/go-git/internal/config"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -16,6 +17,9 @@ import (
 
 func GetRepos(config config.Config) {
 	client, err := SetupClient(config)
+	if err != nil {
+		log.Fatalf("Failed to set up GitLab client: %v", err)
+	}
 
 	os.Mkdir("gitlab", 0755)
 	os.Chdir("gitlab")
@@ -24,12 +28,17 @@ func GetRepos(config config.Config) {
 	if err != nil {
 		log.Fatalf("Failed to get groups: %v", err)
 	}
+
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 10) // limit concurrent clones
+
 	for _, group := range groups {
 		groupName := group.FullPath
 		slog.Debug("Group Path", "groupName", groupName)
 		if err := os.MkdirAll(groupName, 0755); err != nil {
 			log.Fatalf("Failed to create directory for group %s: %v", groupName, err)
 		}
+
 		projects, _, err := client.Groups.ListGroupProjects(group.ID, &gitlab.ListGroupProjectsOptions{
 			ListOptions: gitlab.ListOptions{
 				PerPage: 100,
@@ -39,25 +48,32 @@ func GetRepos(config config.Config) {
 		if err != nil {
 			log.Fatalf("Failed to list projects for group %s: %v", groupName, err)
 		}
+
 		for _, project := range projects {
-			repoUrl := project.HTTPURLToRepo
 			targetDir := filepath.Join(groupName, project.Name)
-
-			slog.Debug("Project Name", "name", project.Name)
-			slog.Debug("Clone URL", "cloneUrl", repoUrl)
-			slog.Debug("Target Directory", "targetDir", targetDir)
-
 			if _, err := os.Stat(targetDir); os.IsNotExist(err) {
-				cloneRepo(config, project, targetDir)
-			}		
+				wg.Add(1)
+				sem <- struct{}{}
+				go func(project *gitlab.Project, targetDir string) {
+					defer wg.Done()
+					defer func() { <-sem }()
+					cloneRepo(config, project, targetDir)
+				}(project, targetDir)
+			}
 		}
 	}
+
+	wg.Wait()
 }
 
 func cloneRepo(config config.Config, project *gitlab.Project, targetDir string) {
-	repoURL := strings.Replace(project.HTTPURLToRepo, "https://", fmt.Sprintf("https://oauth2:%s@", config.Token), 1)
+	repoUrl := strings.Replace(project.HTTPURLToRepo, "https://", fmt.Sprintf("https://oauth2:%s@", config.Token), 1)
 
-	cmd := exec.Command("git", "clone", repoURL, targetDir)
+	slog.Debug("Project Name", "name", project.Name)
+	slog.Debug("Clone URL", "cloneUrl", repoUrl)
+	slog.Debug("Target Directory", "targetDir", targetDir)
+
+	cmd := exec.Command("git", "clone", repoUrl, targetDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {

@@ -1,19 +1,37 @@
 # Go Git
 
-Go Git is a command-line tool that authenticates with a fine-grained GitHub token and clones all accessible repositories (public and private) for the user.
+Go Git is a CLI tool that authenticates with GitHub or GitLab using a personal access token, then recursively fetches all accessible repositories (public and private) and clones them in a structured directory layout. It supports concurrent cloning for improved speed and structured logging with support for configurable verbosity.
 
 ## 📋 Prerequisites
 
-Before using this tool, ensure the following prerequisites are met:
+Before using this tool, ensure the following are installed and configured:
 
-| Requirement  | Description                                                    |
-| ------------ | -------------------------------------------------------------- |
-| Go           | Go 1.18 or higher installed                                    |
-| Git          | Git must be installed and available in your system's PATH      |
-| GitHub Token | Fine-grained personal access token with access to repositories |
-| Config File  | A JSON config file located at `~/.config/go-git/config.json`   |
+| Requirement | Description                                                  |
+| ----------- | ------------------------------------------------------------ |
+| Go          | Go 1.18 or higher installed                                  |
+| Git         | Git must be installed and available in your system's PATH    |
+| Token       | GitHub or GitLab token with access to repositories           |
+| Config File | A JSON config file located at `~/.config/go-git/config.json` |
 
-Example `config.json`:
+### GitHub Token Setup
+
+1. Visit https://github.com/settings/tokens?type=beta
+2. Click **"Generate new token"**, select **"Fine-grained token"**
+3. Give it access to:
+   - Repositories (All Repositories)
+   - Contents (Read-only)
+   - Metadata (Read-only)
+4. Save the token and place it in your config.
+
+### GitLab Token Setup
+
+1. Visit https://gitlab.com/-/profile/personal_access_tokens
+2. Generate a token with:
+   - `read_api`
+   - `read_repository`
+3. Save the token and place it in your config.
+
+### Example `~/.config/go-git/config.json`
 
 ```json
 {
@@ -22,29 +40,60 @@ Example `config.json`:
 }
 ```
 
-## 🚀 Usage
+or for GitLab:
 
-Run the program from the command line:
-
-```bash
-go run main.go
+```json
+{
+  "token": "glpat_xxx...xxx",
+  "scm_name": "gitlab"
+}
 ```
 
-It will:
+## 🚀 Usage
 
-- Load your GitHub token from the config file
-- Authenticate with GitHub
-- List all repositories accessible to your token
-- Clone them into the current directory
+Run from the command line:
 
-## 🛡 Permissions Required
+```bash
+go run main.go graph
+```
 
-| Permission Type   | Permission Level | Purpose                                       |
-| ----------------- | ---------------- | --------------------------------------------- |
-| Repository Access | All Repositories | Grants access to all public and private repos |
-| Contents          | Read-only        | Allows cloning and reading repository files   |
-| Metadata          | Read-only        | Enables reading repository metadata           |
+### Example Commands
+
+```bash
+# Clone all accessible GitHub repositories with debug logging
+go run main.go graph --verbose debug
+
+# Synchronize repositories (fetch and prune)
+go run main.go sync --verbose info
+
+# Build the binary and run it
+go build -o go-git
+./go-git graph
+```
+
+## 🧭 Commands
+
+| Command | Description                                                                |
+| ------- | -------------------------------------------------------------------------- |
+| `graph` | Display a tree of GitLab/GitHub groups and projects, with optional cloning |
+| `sync`  | Clone or pull all repositories into local folders in parallel              |
+
+## ⚙️ CLI Flags
+
+| Flag        | Shorthand | Description                                     |
+| ----------- | --------- | ----------------------------------------------- |
+| `--verbose` | `-v`      | Logging level: `debug`, `info`, `warn`, `error` |
+
+> 🔹 Note: The configuration file is expected at `~/.config/go-git/config.json` and is loaded automatically. It must contain a personal access token and a `scm_name` value of `github` or `gitlab`.
+
+## 🛠 Features
+
+- Authenticates with GitHub or GitLab via PAT
+- Lists all repositories accessible to the token
+- Clones all repositories concurrently with throttling
+- Organized output using ASCII tree
+- Verbose logging with `--verbose debug`
 
 ## 🔒 Security Warning
 
-This application currently injects the GitHub token into the `git clone` URL. Do not share your terminal or logs where the token could be exposed. Future versions may add credential helper support for improved security.
+This tool uses the token directly in the clone URL. Do not expose logs or URLs containing the token. Future versions may include credential helper integration.
